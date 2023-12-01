@@ -1,5 +1,5 @@
 # TorchHeightController
-Arduino based THC that reads plasma cutter voltage and send Up and Down signals to Plasma Torch Actuator to adjust voltage to target value.
+EPS32 based THC that reads plasma cutter voltage and send Up and Down signals to Plasma Torch Actuator to adjust voltage to target value.
 
 * How to Build Video: https://www.youtube.com/watch?v=LxGfTt5eavE
 * Build Information: https://openbuilds.com/builds/standalone-torch-height-controller-for-cnc-plasma-cutting.9571/
