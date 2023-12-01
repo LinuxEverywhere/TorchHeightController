@@ -1,6 +1,5 @@
 /*
     Torch Height Controller
-    Copyright (C)2020  by Jeremiah Hale - HaleDesignTech - Principal Engineer
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,22 +20,8 @@
   Aim:
   ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   "THCRemote" reads and sends plasma voltage to "THCPlasma" to adjust cutting voltage to target value.
-
-  Description:
-  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  It's important for a plasma arc to be stable and be a set height from the workpiece to be cut.
-  The main reason for this is the plasma arc will cut a bevel on the side walls of the height it not set right or crash into the workpiece...
-  This is because the plasma arc is not like a laser with straight edges but more like an egg.
-  Making the problem worse is the fact the metal can warp and contort when a hot plasma arc cuts into it.
-  Using the Arc Voltage is a good want to estimate the distance to the workpiece from the torch head.
-  The unknown we are trying to solve for here is the Torch Height from the Workpiece.
-  A proportional correlation is the longer the arc the higher the voltage.
-  So, we can measure the plasma voltage and feed that into a PID Algorithm to calculate
-  the torch height to change the voltage to a setpoint.
-  It is unwise to measure the Arc Voltage Directly of the plasma torch because the levels there can be deadly.
-
-  For Plasma cutters without an isolated 50:1 volt cnc output.
-
+  For Plasma cutters without cnc isolated 50:1 volt output.
+  
   Hardware:
   ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   1 x Esp32 dev board

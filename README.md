@@ -1,23 +1,15 @@
 # TorchHeightController
-EPS32 based THC that reads plasma cutter voltage and send Up and Down signals to Plasma Torch Actuator to adjust voltage to target value.
 
 * Forked from: https://openbuilds.com/builds/standalone-torch-height-controller-for-cnc-plasma-cutting.9571/
 
+"THCRemote" reads and sends plasma voltage to "THCPlasma" to adjust cutting voltage to target value.
+
+For Plasma cutters without a cnc isolated 50:1 volt output.
+
 ## Description
-Aim is to create a low cost and easy to use Torch Height Controller with off the shelf parts, simple easy to read code and as little electronics tinkering as possible.
-This is a standalone type of THC so it requires an actuator to move the torch independent of the CNC machines controller.
 
-The unknown we are trying to solve for here is the Torch Height from the Workpiece measurement.
-It's important for a plasma arc to be stable and be a set height from the workpiece to be cut.
-The main reason for this is the plasma arc will cut a bevel on the side walls if the height is not set right or crash into the workpiece...
-This is because the plasma arc is not like a laser with straight edges but more like an egg.
-Making the problem worse is the fact the metal can warp and contort when a hot plasma arc cuts into it.
 Using the Arc Voltage is a good way to estimate the distance to the workpiece from the torch head.
-
-The proportional correlation is the longer the arc the higher the voltage.
-So, we can measure the plasma voltage and feed that into a PID Algorithm to calculate the torch height to change the voltage to a setpoint.
-
-For Plasma cutters without an isolated 50:1 volt cnc output.
+We measure the plasma voltage and feed that into a PID Algorithm to calculate the torch height to change the voltage to a setpoint.
 
 Hardware:
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
