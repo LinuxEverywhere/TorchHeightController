@@ -1,7 +1,3 @@
-# IMPORTANT NOTE
-For those of you who downloed the THC.GUI.V1.0.0.tft firmware file it was missing a settings few pages... my bad... I've uploaded the new one THC.GUI.V1.0.1.tft please grab that and reflash your displays. Thanks to the members of the community that pointed this out to me!
-
-
 # TorchHeightController
 Arduino based THC that reads plasma cutter voltage and send Up and Down signals to Plasma Torch Actuator to adjust voltage to target value.
 
@@ -29,14 +25,10 @@ Check the Technical Specs of your plasma cutter:
 Don't Die.
 
 ## Hardware
-* Arduino: Uno R3
+* 2 x Esp32 dev board 
 * Nextion HMI Screen: NX4832T035_011
-* Driver Board: Makerbase MKS TMC2160-OC V1.0
-* 2 Fans(overkill I know): 40 x 40 x 10mm 4010 Brushless DC Cooling Fan 12v
-* Aluminum Electrolytic Capacitor(optional): Nichicon USA1H010MDD1TE 1µF 50V Aluminum Electrolytic Capacitors Radial
-* Input Connector: Cat5e Ethernet RJ-45 Keystone Jack
-* Output Connector: Cat5e Ethernet RJ-45 Keystone Jack
-* Power: 10v 5Amp DC barrel jack
+* tb6600 stepper driver
+* Power: 24v plama cutter for remote; 5V common rail for THC/main controller.
 * PC diagnostic: USB A - USB B
 * MicroSD card: 8gb
 
@@ -52,6 +44,7 @@ Don't Die.
  * FastPID Library
  * EasyNextionLibrary
  * AccelStepper
+ * PreferencesLibrary
  * Nextion Editor
  
 # Setup and Configuration
@@ -115,53 +108,7 @@ Follow these steps to upload your sketch:
 ## Main Process Code 
 This code is designed to run as fast as possible. It uses a while() loop to focus on Calulations and movements when voltage input is over the threshold.
 
-```c++ 
-// the loop function runs over and over again forever
-void loop()
-{
-  THCNex.NextionListen();
-  Input = map(analogRead(PLASMA_INPUT_PIN),0,1023,0,25000)+CalibrationOffset; //reads plasma arc voltage and convert to millivolt
-  process(); //This is the main method of the application it calulates position and move steps if Input Voltage is over threshold.
-  if(CurrentPageNumber <= 6 || CurrentPageNumber == 11){report();}
+process(){
+...
 }
 
-void process() //Calculates position and move steps
-{
-  oldDelay = micros();
-  while(Input > (threshold+CalibrationOffset)) //Only move if cutting by checking for voltage above a threshold level
-  {
-    if(micros()-oldDelay >= arcStabilizeDelay) //wait for arc to stabilize tipically 100-300ms
-    {
-      Input = map(analogRead(PLASMA_INPUT_PIN),0,1023,0,25000)+CalibrationOffset; //get new plasma arc voltage and convert to millivolts
-      
-      currentGap = abs(SetPoint-Input); //distance away from setpoint
-      if (currentGap < gap) {THCPID.setCoefficients(Kp, Ki, Kd, Hz);} //we're close to setpoint, use conservative tuning parameters
-      else {THCPID.setCoefficients(aggKp, aggKi, aggKd, Hz);} //we're far from setpoint, use aggressive tuning parameters
-  
-      if (SetPoint > Input)
-      {
-        targetInput = Input - SetPoint + SetPoint;
-        output = THCPID.step(SetPoint, targetInput);
-        pos = pos + output;
-      }
-      else
-      {
-        targetInput = SetPoint - Input + SetPoint;
-        output = THCPID.step(SetPoint, targetInput);
-        pos = pos - output;  
-      }
-    
-      //Validate move is within range
-      if(pos >= maxPos){pos = maxPos;}
-      if(pos <= minPos){pos = minPos;}
-      
-      //do move
-      stepper.moveTo(pos);
-      while(stepper.distanceToGo() != 0){stepper.run();}
-      
-      report(); //report plasma voltage and position
-      //format();         
-    }
-  }
-}
-```
