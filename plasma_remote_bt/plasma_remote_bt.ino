@@ -1,7 +1,64 @@
-//#include <BTAddress.h>
-//#include <BTScan.h>
+/*
+    Plasma remote reader
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+  Software Version: 2.0.0.alpha
+
+  Aim:
+  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  "THCRemote" reads and sends plasma voltage to "THCPlasma" to adjust cutting voltage to target value.
+
+  Description:
+  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  It's important for a plasma arc to be stable and be a set height from the workpiece to be cut.
+  The main reason for this is the plasma arc will cut a bevel on the side walls of the height it not set right or crash into the workpiece...
+  This is because the plasma arc is not like a laser with straight edges but more like an egg.
+  Making the problem worse is the fact the metal can warp and contort when a hot plasma arc cuts into it.
+  Using the Arc Voltage is a good want to estimate the distance to the workpiece from the torch head.
+  The unknown we are trying to solve for here is the Torch Height from the Workpiece.
+  A proportional correlation is the longer the arc the higher the voltage.
+  So, we can measure the plasma voltage and feed that into a PID Algorithm to calculate
+  the torch height to change the voltage to a setpoint.
+  It is unwise to measure the Arc Voltage Directly of the plasma torch because the levels there can be deadly.
+
+  For Plasma cutters without a 50:1  isolated volt output.
+
+
+  Hardware:
+  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  1 x Esp32 dev board
+  200:3.3 stepdown voltage divider ciruit
+  Power:AP63203WU-7DICT-ND 3.3v buck converter tapped into plasma 24V rail
+
+  3rd Party Software:
+  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+  BluetoothSerial
+  By Evandro Copercini
+  Version Used: 2.0.0
+  Preferences
+  ByHristo Gochkov
+  Version Used: 2.0.0
+  From: Additional Boards Manager URL: https://dl.espressif.com/dl/package_esp32_index.json
+
+  Input:
+  Arc Voltage, conservative P I D parameters, aggressive P I D parameters, Gap(amount away from setpoint for Agg/Con PID Settings), Arc Voltage Setpoint, ArcStablizeDelay, and Z axes bountray limits.
+
+*/
 #include <BluetoothSerial.h>
-//#include <BTAdvertisedDevice.h>
+
 
 #define PLASMA_INPUT_PIN 36
 
@@ -29,7 +86,7 @@ String myName = "THCRemote";
 bool connected;
 
 void BT_connect() {
-  
+
   // connect(address) is fast (up to 10 secs max), connect(slaveName) is slow (up to 30 secs max) as it needs
   // to resolve slaveName to address first, but it allows to connect to different devices with the same name.
   // Set CoreDebugLevel to Info to view devices Bluetooth address and device names
@@ -64,7 +121,7 @@ void BT_connect() {
 }
 
 void setup() {
-  
+
   Serial.begin(115200);
   SerialBT.begin(myName, true);
   Serial.printf("The device \"%s\" started in master mode, make sure slave BT device is on!\n", myName.c_str());
@@ -77,18 +134,18 @@ void setup() {
 }
 
 void loop() {
-  
+
   m = millis();
   if (!connected) {
     BT_connect();
   }
-  if (m-t>lastreadTime) { 
+  if (m-t>lastreadTime) {
     lastreadTime = m;
     PlasmaV = map(analogRead(PLASMA_INPUT_PIN), 0, 511, 0, 200000);
   }
   if (SerialBT.available()) {
     if (SerialBT.readString().indexOf("get") >= 0){
-      SerialBT.write(PlasmaV);    
+      SerialBT.write(PlasmaV);
     }
   }
 }

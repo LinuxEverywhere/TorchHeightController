@@ -15,12 +15,12 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-  Software Version: 1.0.0
-  Compatible with THC Nextion Screen Firmware Version: 1.0.0
+  Software Version: 2.0.0.alpha
+  Compatible with THC Nextion Screen Firmware Version: 1.0.6
 
   Aim:
   ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  Arduino based THC that reads 50:1 or 16:1 plasma voltage and send Up and Down signals to Plasma Torch Actuator to adjust voltage to target value.
+  "THCRemote" reads and sends plasma voltage to "THCPlasma" to adjust cutting voltage to target value.
 
   Description:
   ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -34,67 +34,44 @@
   So, we can measure the plasma voltage and feed that into a PID Algorithm to calculate
   the torch height to change the voltage to a setpoint.
   It is unwise to measure the Arc Voltage Directly of the plasma torch because the levels there can be deadly.
-  Most CNC ready Plasma Cutters on the market have 50:1 arc voltage dividers built right into the machine.
-  If yours doesn't have this then you will need to do surgery and add a voltage divider circuit to your plasma cutter...
-  Check the Technical Specs of your plasma cutter:
-  Don't Die.
 
+  For Plasma cutters without an isolated 50:1 volt cnc output.
 
   Hardware:
   ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  Arduino: Uno R3
+  1 x Esp32 dev board
   Nextion HMI Screen: NX4832T035_011
-  Makerbase: MKS TMC2160-OC V1.0
-  2 Fans(overkill I know): 40 x 40 x 10mm 4010 Brushless DC Cooling Fan 12v
-  Aluminum Electrolytic Capacitor(optional): Nichicon USA1H010MDD1TE 1µF 50V Aluminum Electrolytic Capacitors Radial
-  Input Connector: Cat5e Ethernet RJ-45 Keystone Jack
-  Output Connector: Cat5e Ethernet RJ-45 Keystone Jack
-  Power: 10v 5Amp DC barrel jack
-  PC diagnostic: USB A - USB B
-
-  Donate:
-  https://www.patreon.com/HaleDesign
-
-  More info:
-  https://github.com/HaleDesign/TorchHeightController
-  http://hdt.xyz
+  tb6600 stepper driver
+  Power: 5V common rail with cnc controller + buss switching hardware
 
   3rd Party Software:
   ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   FastPID Library
   by Mike Matera
-
-  INSTALL
   The FastPIDPID Library is available in the Arduino IDE Library Manager
-
-  DOWNLOADS
-  PID Library
   Latest version on GitHub: https://github.com/mike-matera/FastPID
-  Version Used: v1.3.0
-
+  Version Used: v1.3.1
 
   EasyNextionLibrary
   by Athanasios Seitanis
   contact: eithagta@gmail.com
-
-  INSTALL
   The EasyNextionLibrary is available in the Arduino IDE Library Manager
-
-  DOWNLOADS
-  Download the latest release of EasyNextionLibrary.
   From: https://github.com/Seithan/EasyNextionLibrary
-  Version Used: v1.0.4
+  Version Used: v1.0.6
 
   AccelStepper
   by Mike McMauley
-
-  INSTALL
   The AccelStepper is available in the Arduino IDE Library Manager
-
-  More info
   From: http://www.airspayce.com/mikem/arduino/AccelStepper/
-  Version Used: v1.61.0
+  Version Used: v1.64.0
 
+  BluetoothSerial
+  By Evandro Copercini
+  Version Used: 2.0.0
+  Preferences
+  ByHristo Gochkov
+  Version Used: 2.0.0
+  From: Additional Boards Manager URL: https://dl.espressif.com/dl/package_esp32_index.json
 
   Input:
   Arc Voltage, conservative P I D parameters, aggressive P I D parameters, Gap(amount away from setpoint for Agg/Con PID Settings), Arc Voltage Setpoint, ArcStablizeDelay, and Z axes bountray limits.
@@ -104,23 +81,21 @@
 #include <EasyNextionLibrary.h>   // Include EasyNextionLibrary
 #include <AccelStepper.h>
 #include <BluetoothSerial.h>
-// the variables to be using be the code below
-EasyNex THCNex(Serial); // Create an object of EasyNex class with the name < TCHNex >
-// Set as parameter the Serial you are going to use
-// Default baudrate 9600
-
 #include <Preferences.h>
+
+// the variables to be using be the code below
+
+EasyNex THCNex(Serial); // Create an object of EasyNex class with the name < TCHNex >
 Preferences Saved;
 
 #define PLASMA_ON_PIN 20
 #define STEP_PIN 23      // Direction
 #define DIR_PIN 22       // Step
-//MKS Drive board enable pin in 13
-//No need to define because it uses the onboard LED on the Arduino Uno R3
 
 unsigned long m, lastreadTime = 0;
 
 //#define USE_NAME // Comment this to use MAC address instead of a slaveName
+
 const char *pin = "43f4"; // Change this to reflect the pin expected by the real slave BT device
 
 #if !defined(CONFIG_BT_SPP_ENABLED)
@@ -136,7 +111,7 @@ BluetoothSerial SerialBT;
   uint8_t address[6]  = {0xAA, 0xBB, 0xCC, 0x11, 0x22, 0x33}; // Change this to reflect real MAC address of your slave BT device
 #endif
 
-String myName = "PlasmaTHC";
+String myName = "THCPLasma";
 bool connected;
 
 // Define a stepper driver and the pins it will use
@@ -152,28 +127,6 @@ uint32_t oldDelay;
 uint32_t arcStabilizeDelay;
 int SetPoint,Input,CalibrationOffset = 0;
 
-/* Set Addresses for Setpoint saving
-int addressPage1 = 10;
-int addressPage2 = 20;
-int addressPage3 = 30;
-int addressPage4 = 40;
-int addressPage5 = 50;
-int addressPage6 = 60;
-int addressGap = 70;
-int addressThreshold = 80;
-int addressDelay = 90;
-int addressSteps = 100;
-int addressCalibrate = 110;
-int addressMaxpos = 120;
-int addressMinpos = 130;
-int addressAP = 200;
-int addressAI = 300;
-int addressAD = 400;
-int addressCP = 500;
-int addressCI = 600;
-int addressCD = 700;
-int addressScale = 800;
-*/
 int defaultSetpoint = 10900;
 
 int SetpointPage1 = 0;
@@ -236,7 +189,7 @@ void setup() {
   //initialize the variables we're linked to
   // Load EEPROM Addresses for Setpoints or set defaults
   SetpointPage1 = Saved.getInt("Page1",defaultSetpoint);
- 
+
   SetpointPage2 = Saved.getInt("Page2",defaultSetpoint);
 
   SetpointPage3 = Saved.getInt("Page3",defaultSetpoint);
@@ -259,7 +212,7 @@ void setup() {
   arcStabilizeDelay = Saved.getInt("Delay",500);
 
   steps_per_mm = Saved.getInt("Steps",160);
- 
+
   maxPos = Saved.getInt("Maxpos",maxPos);
 
   minPos = Saved.getInt("Minpos",minPos);
@@ -306,7 +259,7 @@ void loop()
 void process() //Calulates position and move steps
 {
   oldDelay = micros();
-  if (!SerialBT.available()) { 
+  if (!SerialBT.available()) {
     SerialBT.println("get");
     delay(400);
   }
