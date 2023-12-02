@@ -1,25 +1,19 @@
 # TorchHeightController
 
+(In alpha state)
+
 * Forked from: https://openbuilds.com/builds/standalone-torch-height-controller-for-cnc-plasma-cutting.9571/
 
-"THCRemote" reads and sends plasma voltage to "THCPlasma" to adjust cutting voltage to target value.
+THC_Remote reads and sends plasma voltage to THC_Controller to adjust torch voltage to target value.
 
-For Plasma cutters without a cnc isolated 50:1 volt output.
+Designed for Plasma cutters without isolated 50:1 output.
 
 ## Description
 
-Using the Arc Voltage is a good way to estimate the distance to the workpiece from the torch head.
-We measure the plasma voltage and feed that into a PID Algorithm to calculate the torch height to change the voltage to a setpoint.
+Arc Voltage is used to estimate the distance to the workpiece from the torch head.
+The plasma voltage is used calculate the torch height to change the voltage to a setpoint.
 
-Hardware:
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-2 x Esp32 dev board
-Nextion HMI Screen: NX4832T035_011
-tb6600 stepper driver
-Power: 5V common rail with cnc controller 3.3v tap for remote
-
-3rd Party Software:
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+## 3rd Party Software
 FastPID Library
 by Mike Matera
 The FastPIDPID Library is available in the Arduino IDE Library Manager
@@ -49,16 +43,17 @@ From: Additional Boards Manager URL: https://dl.espressif.com/dl/package_esp32_i
 
 ## Hardware
 * 2 x Esp32 dev board
-* Nextion HMI Screen: NX4832T035_011
 * tb6600 stepper driver
-* Power: 3.3v plasma cutter tap for remote; 5V common rail for THC and main controller.
+* Power: 5V common rail with cnc controller, 5v tap for remote
+* 200:3.3v stepdown circuit
+* hardware swapping of controller stepper outputs when torch is on.
 
 ## 3rd Party software used
  * Auduino IDE
  * FastPID Library
  * EasyNextionLibrary
  * AccelStepper
- * PreferencesLibrary
+ * ESP32 Preferences/SerialBt libraries
  * Nextion Editor
 
 # Setup and Configuration

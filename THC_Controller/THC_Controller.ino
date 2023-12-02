@@ -14,20 +14,20 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-  Software Version: 2.0.0.alpha
-  Compatible with THC Nextion Screen Firmware Version: 1.0.6
+  Software Version: 2.0.1.alpha
 
   Aim:
   ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  "THCRemote" reads and sends plasma voltage to "THCPlasma" to adjust cutting voltage to target value.
-  For Plasma cutters without cnc isolated 50:1 volt output.
-  
+  "THC_Remote" sends torch voltage to "THC_Controller", which moves the torch to match the voltage set point.
+  Designed for Plasma cutters without cnc isolated 50:1 volt output.
+
   Hardware:
   ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   1 x Esp32 dev board
-  Nextion HMI Screen: NX4832T035_011
+  Nextion HMI Screen: NX4832T035
   tb6600 stepper driver
-  Power: 5V common rail with cnc controller + buss switching hardware
+  200:3.3 stepdown voltage circuit (isolated)
+  Power: 5V common rail with cnc controller with hotswapping stepper outputs between contollers in hardware
 
   3rd Party Software:
   ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -73,7 +73,8 @@
 EasyNex THCNex(Serial); // Create an object of EasyNex class with the name < TCHNex >
 Preferences Saved;
 
-#define PLASMA_ON_PIN 20
+//#define LED_PIN 2
+#define PLASMA_ON_PIN 4
 #define STEP_PIN 23      // Direction
 #define DIR_PIN 22       // Step
 
@@ -90,13 +91,13 @@ const char *pin = "43f4"; // Change this to reflect the pin expected by the real
 BluetoothSerial SerialBT;
 
 #ifdef USE_NAME
-  String slaveName = "THCRemote"; // Change this to reflect the real name of your slave BT device
+  String slaveName = "THC_Remote"; // Change this to reflect the real name of your slave BT device
 #else
   String MACadd = "AA:BB:CC:11:22:33"; // This only for printing
   uint8_t address[6]  = {0xAA, 0xBB, 0xCC, 0x11, 0x22, 0x33}; // Change this to reflect real MAC address of your slave BT device
 #endif
 
-String myName = "THCPLasma";
+String myName = "THC_Contoller";
 bool connected;
 
 // Define a stepper driver and the pins it will use
@@ -111,6 +112,7 @@ int currentGap, gap;
 uint32_t oldDelay;
 uint32_t arcStabilizeDelay;
 int SetPoint,Input,CalibrationOffset = 0;
+bool debug = false;
 
 int defaultSetpoint = 10900;
 
@@ -167,9 +169,8 @@ void setup() {
 
   // Begin the object with a baud rate of 9600
   THCNex.begin();  // If no parameter was given in the begin(), the default baud rate of 9600 will be used
-//  while (!Serial) {
-//   ; // wait for serial port to connect. Needed for native USB port only
-//  }
+  if (debug) { Serial.begin(115200); };//for debugging via usb.
+//  while(!Serial);
   OpenSaved();
   //initialize the variables we're linked to
   // Load EEPROM Addresses for Setpoints or set defaults
